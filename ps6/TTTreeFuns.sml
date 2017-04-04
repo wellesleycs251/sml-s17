@@ -1,6 +1,6 @@
 (* Put your name here:    *)
 
-(* CS 251 Fall '16 Problem Set 7 Problem 3 TTTreeFuns *)
+(* CS 251 Spring '17 Problem Set 7 Problem 5 TTTreeFuns *)
 
 (* Here, write your definition of elts: TTTree -> int list *)
 
