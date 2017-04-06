@@ -45,22 +45,9 @@ structure PostFix = struct
   and execCmds cmds vs = foldl (fn (cmd,stk) => execCmd cmd stk) vs cmds
 						
   (* Perform command on given stack and return resulting stack *)	
-  and execCmd (Int i) vs = (IntVal i) :: vs
-    | execCmd (Seq cmds) vs = (SeqVal cmds) :: vs
-    | execCmd Pop (v :: vs) = vs
-    | execCmd Swap (v1 :: v2 :: vs) = v2 :: v1 :: vs
-    | execCmd Nget ((IntVal index) :: vs) =
-      (case List.nth(vs, index-1) of
- 	  (v as IntVal(_)) => v :: vs
-         | SeqVal(_) => raise ExecError "Nget can't get a command sequence")
-    | execCmd Sel (v_else :: v_then :: (IntVal v_test) :: vs) =
-      (if v_test = 0 then v_else else v_then) :: vs
-    | execCmd Exec ((SeqVal cmds) :: vs) = execCmds cmds vs
-    | execCmd (Arithop a) ((IntVal i1) :: (IntVal i2) :: vs)
-      = (IntVal ((arithopToFun a)(i2, i1)) ) :: vs
-    | execCmd (Relop r) ((IntVal i1) :: (IntVal i2) :: vs)
-      = (IntVal (boolToInt( ((relopToFun r)(i2, i1)) ) ) ) :: vs
-    | execCmd _ _ = raise ExecError "Unexpected Configuration" 
+  and execCmd (Int i) vs = vs
+    | execCmd (Seq cmds) vs = vs
+    | execCmd  _ vs = vs
 
   and arithopToFun Add = op+
     | arithopToFun Mul = op*
