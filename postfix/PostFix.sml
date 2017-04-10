@@ -32,7 +32,11 @@ structure PostFix = struct
   (* Stack values are either integers or executable sequences *)			       
   datatype stkval = IntVal of int | SeqVal of cmd list
 
-  exception ExecError of string (* for runtime errors during execution *)
+						  
+  exception ConfigError of string * cmd * stkval list
+    (* for errors involving a bad stack for a command *)
+  exception ExecError of string
+    (* for other runtime errors during execution *)
 
   fun run (PostFix(numargs, cmds)) args =
     if numargs = List.length args
@@ -49,10 +53,14 @@ structure PostFix = struct
     | execCmd (Seq cmds) vs = (SeqVal cmds) :: vs
     | execCmd Pop (v :: vs) = vs
     | execCmd Swap (v1 :: v2 :: vs) = v2 :: v1 :: vs
-    | execCmd Nget ((IntVal index) :: vs) =
-      (case List.nth(vs, index-1) of
- 	  (v as IntVal(_)) => v :: vs
-         | SeqVal(_) => raise ExecError "Nget can't get a command sequence")
+    | execCmd Nget (stk as (IntVal index) :: vs) =
+      if index <= 0 orelse index > List.length(vs) then
+	  raise ConfigError("Invalid index", Nget, stk)
+      else
+	  (case List.nth(vs, index-1) of
+ 	       (v as IntVal(_)) => v :: vs
+             | SeqVal(_) => raise ConfigError("Nget can't get a command sequence",
+					      Nget, stk))
     | execCmd Sel (v_else :: v_then :: (IntVal v_test) :: vs) =
       (if v_test = 0 then v_else else v_then) :: vs
     | execCmd Exec ((SeqVal cmds) :: vs) = execCmds cmds vs
@@ -60,7 +68,7 @@ structure PostFix = struct
       = (IntVal ((arithopToFun a)(i2, i1)) ) :: vs
     | execCmd (Relop r) ((IntVal i1) :: (IntVal i2) :: vs)
       = (IntVal (boolToInt( ((relopToFun r)(i2, i1)) ) ) ) :: vs
-    | execCmd _ _ = raise ExecError "Unexpected Configuration" 
+    | execCmd cmd stk = raise ConfigError("Illegal configuration", cmd, stk)
 
   and arithopToFun Add = op+
     | arithopToFun Mul = op*
@@ -130,8 +138,15 @@ structure PostFix = struct
     | cmdToSexp (Relop Eq) = Sexp.Sym "eq"
     | cmdToSexp (Relop Gt) = Sexp.Sym "gt"
 
-  and cmdToString s = Sexp.sexpToString (cmdToSexp s)
-  and pgmToString s = Sexp.sexpToString (pgmToSexp s)			      
+  and stkvalToSexp (IntVal i) = Sexp.Int i
+    | stkvalToSexp (SeqVal cmds) = Sexp.Seq (map cmdToSexp cmds)
+
+  and stkToSexp stkvals = Sexp.Seq (map stkvalToSexp stkvals)
+
+  and cmdToString cmd = Sexp.sexpToString (cmdToSexp cmd)
+  and pgmToString pgm = Sexp.sexpToString (pgmToSexp pgm)
+  and stkvalToString v = Sexp.sexpToString (stkvalToSexp v)
+  and stkToString stk = Sexp.sexpToString (stkToSexp stk)
 
 end
 
@@ -141,10 +156,14 @@ open PostFix
 fun testRun pgm args =
   Int.toString (run pgm args) (* Convert to string so same type as error messages below *)
   handle ExecError msg => "ExecError: " ^ msg
-         | General.Div => "Divide by zero error"
-           (* General.Div from SML General basis structure;
-              Need explicit qualification to distinguish from PostFix.Div *)
-         | other => "Unknown exception: " ^ (exnMessage other)
+       | ConfigError(msg, cmd, stk) =>
+	 "ConfigError: " ^ msg
+	 ^ " command=" ^ (cmdToString cmd)
+	 ^ " and stack=" ^ (stkToString stk)
+       | General.Div => "Divide by zero error"
+         (* General.Div from SML General basis structure;
+            Need explicit qualification to distinguish from PostFix.Div *)
+       | other => "Unknown exception: " ^ (exnMessage other)
 
 (* test cases *)
 
@@ -165,10 +184,22 @@ val pfSelTest2 = testRun (PostFix(0, [Int 0, Int 7, Int 2, Sel])) []
 val pfSeqTest = testRun (PostFix(0, [Int 4, Int 7, Int 2, Seq [Pop, Swap, Arithop(Sub)]])) []
 val pfExecTest = testRun (PostFix(0, [Int 4, Int 7, Int 2, Seq [Pop, Swap, Arithop(Sub)], Exec])) []
 val pfArgTest = testRun (PostFix(3, [Swap, Arithop(Div), Arithop(Sub)])) [7,2,1]
-val pfArgMismatchTest = testRun (PostFix(3, [Swap, Arithop(Div), Arithop(Sub)])) [7,2]
 val pf1Tests = map (testRun pf1) [[3, 5], [3, ~5]]
 (* expect ["2", "28"] *)
 
+(* error tests *)		   
+val pfArgMismatchTest = testRun (PostFix(3, [Swap, Arithop(Div), Arithop(Sub)])) [7,2]
+val pfPopEmptyStack = testRun (PostFix(0, [Pop])) []
+val pfSwapEmptyStack = testRun (PostFix(0, [Swap])) []
+val pfSwapSingletonStack = testRun (PostFix(1, [Swap])) [4]
+val pfArithopEmptyStack = testRun (PostFix(0, [Arithop Sub])) []
+val pfArithopSingletonStack = testRun (PostFix(1, [Arithop Sub])) [4]
+val pfRelopEmptyStack = testRun (PostFix(0, [Relop Lt])) []
+val pfRelopSingletonStack = testRun (PostFix(1, [Relop Lt])) [4]
+val pfNgetNegativeIndex = testRun (PostFix(3, [Int ~1, Nget])) [7, 9, 5]
+val pfNgetZeroIndex = testRun (PostFix(3, [Int 0, Nget])) [7, 9, 5]
+val pfNgetTooBigIndex = testRun (PostFix(3, [Int 4, Nget])) [7, 9, 5]
+val pfNgetSeqVal = testRun (PostFix(3, [Seq[Swap,Pop], Int 1, Nget])) [7, 9, 5]
 
 exception SexpError of string * Sexp.sexp
 
