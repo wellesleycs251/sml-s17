@@ -73,8 +73,14 @@ and stringToPrimop "+" = Add
   | stringToPrimop "%" = Rem
   | stringToPrimop s = raise (SyntaxError ("invalid Intex primop: " ^ s))
 
+(* val stringToExp : string -> exp *)			     
 and stringToExp s = sexpToExp (Sexp.stringToSexp s)
+
+(* val stringToPgm : string -> pgm *)			      
 and stringToPgm s = sexpToPgm (Sexp.stringToSexp s)
+
+(* val fileToPgm : string -> pgm *)
+and fileToPgm filename = sexpToPgm (Sexp.fileToSexp filename)			      
 
 (* Unparsing from S-Expressions *)
 
@@ -120,6 +126,9 @@ fun testRun' pgmSexpString argsSexpString =
          | Sexp.IllFormedSexp msg => ("SexpError: Ill-formed sexp " ^ msg)
          | other => "Unknown exception: " ^ (exnMessage other)
 
+
+						
+
 and sexpStringToIntList str =
     let val sexp = Sexp.stringToSexp str
     in case sexp of
@@ -130,8 +139,82 @@ and sexpStringToIntList str =
 and sexpToInt (Sexp.Int i) = i
   | sexpToInt sexp = raise SexpError("expected sexp int but got", sexp)
 
+
 val avgTest2 = testRun' "(intex 2 (/ (+ ($ 1) ($ 2)) 2))" "(5 15)"
 val f2cTest2 = map (testRun' "(intex 1 (/ (* (- ($ 1) 32) 5) 9))")
 		   ["(-40)", "(0)", "(32)", "(98)", "(212)"]
+			   
+
+  (* An interactive read-eval-print loop (REPL) for Intex expressions.
+     By default, assumes zero arguments, but this can be changed
+     with the #args directive (see below). The following directives
+     are supported:
+
+     + (#args i_1 i_n): Installs the n integers i_ 1 ... i_n 
+       as the current positional program arguments
+
+     + (#run <pgm> <arg1> ... <arg_n>) runs the program specified
+       by <filename> on the arguments in <args>, where
+
+       - <pgm> is a symbol or string naming a file containing the program
+         or an sexp representation of the program.
+
+       - <arg_i> are integer program arguments
+
+       E.g., (#run avg.itx 5 15)
+             (#run "avg.itx" 5 15)
+             (#run (intex 2 (/ (+ ($ 1) ($ 2)) 2)) 5 15)
+
+     + (#quit): Exit the interpreter
+ *)
+
+  fun repl () =
+
+    let
+
+	fun println s = print (s^"\n")
+		
+	(* sexpToInt : sexp -> int *)
+	fun sexpToInt (Sexp.Int i) = i
+	  | sexpToInt sexp = raise (Fail ("Not an int!: " ^ (Sexp.sexpToString sexp)))
+	(* getPgm : sexp -> pgm *)				    
+	(* get a Bindex program from a specification *)
+	(* treat a symbol or string as the name of a file containing the program *)
+	fun getPgm (Sexp.Sym filename) = fileToPgm filename
+	  | getPgm (Sexp.Str filename) = fileToPgm filename
+	  | getPgm sexp = sexpToPgm sexp 
+
+	fun loop ints = (* ints are positional arguments *)
+	    let val _ = print "\nintex> " 
+		val sexp = Sexp.readSexp()
+	    in case sexp of 
+		   Sexp.Seq [Sexp.Sym "#quit"] => println "Moriturus te saluto!"
+		 | Sexp.Seq ((Sexp.Sym "#args") :: intxs) => 
+		   let val args = map sexpToInt intxs
+		   in loop args (* install args as new default arguments *)
+		   end
+		 | Sexp.Seq ((Sexp.Sym "#run") :: pgmx :: intxs) => 
+		   let val _ = println (Int.toString (run (getPgm pgmx) (map sexpToInt intxs)))
+			       handle EvalError s => println ("Error: " ^ s)
+				    | SyntaxError s => println ("Error: " ^ s)
+				    | Fail s => println ("Error: " ^ s)
+				    | other => println ("Error: " ^ (exnName other)
+							^ " -- " ^ (exnMessage other))
+		   in loop ints (* use same default ints as before *)
+		   end
+		 (* Otherwise evaluate expression relative to current arguments
+                    determined by #args *)      
+		 | _ => let val  _ = println (Int.toString (eval (sexpToExp sexp) ints))
+				     handle EvalError s => println ("Error: " ^ s)
+					  | SyntaxError s => println ("Error: " ^ s)
+					  | Fail s => println ("Error: " ^ s)
+					  | other => println ("Error: " ^ (exnName other)
+							      ^ " -- " ^ (exnMessage other))
+			in loop ints (* use same default ints as before *)
+			end
+	    end
+    in loop []
+    end
+
 
 	       
