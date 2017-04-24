@@ -1,0 +1,5 @@
+;; Calculate ax^2 + bx + c
+(bindex (a b c x)
+  (+ (* a (* x x))
+     (+ (* b x)
+        c)))

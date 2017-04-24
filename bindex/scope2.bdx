@@ -1,0 +1,6 @@
+(bindex (x y)            
+  (+ (bind x (/ y x)     
+       (bind y (- x y)   
+         (* x y)))       
+     (bind y (bind x (+ x y) (* x y))
+       (/ y x))))

@@ -1,0 +1,3 @@
+;; Test non-commutative operators
+(bindex (x y) (- (% x y) (/ x y)))
+  

@@ -1,0 +1,3 @@
+(bindex (a b)
+  (bind sum (+ a b)
+    (/ sum 2)))

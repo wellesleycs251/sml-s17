@@ -1,0 +1,6 @@
+(bindex (a b)
+  (bind a_sq (* a a)
+    (bind b_sq (* b b)
+      (bind numer (+ a_sq b_sq)
+        (bind denom (- a_sq b_sq)
+          (/ numer denom))))))

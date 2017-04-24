@@ -1,0 +1,4 @@
+;; Test case with bind in first operand position
+(bindex (p q)
+  (- (bind sum (+ p q) (/ sum q))
+     q))
