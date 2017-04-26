@@ -1,0 +1,1 @@
+(simprex (n) (simprec 1 (i a (* i a)) n))

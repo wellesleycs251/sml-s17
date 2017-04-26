@@ -1,0 +1,4 @@
+(simprex (n x)
+  (simprec 1
+  	   (power sum (+ sum (simprec 1 (ignore ans (* x ans)) power)))
+	   n))

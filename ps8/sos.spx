@@ -1,0 +1,1 @@
+(simprex (hi) (simprec 0 (i sumSoFar (+ (* i i) sumSoFar)) hi))

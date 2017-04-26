@@ -1,0 +1,1 @@
+(simprex (b p) (simprec 1 (n ans (* b ans)) p))

@@ -1,0 +1,2 @@
+;; A simple Simprex program distinguishing right-to-left and left-to-right evaluation
+(simprex (n) (simprec 0 (i ans (- i ans)) n))

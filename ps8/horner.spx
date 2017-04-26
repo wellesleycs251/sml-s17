@@ -1,0 +1,4 @@
+;; Calculates x^n + 2x^(n-1) ... + (n-1)x + n
+;; This program distinguishes left-to-right and right to left evaluation
+(simprex (n x)
+  (simprec 0 (i a (+ i (* x a))) n))
