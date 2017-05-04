@@ -1,0 +1,4 @@
+(hofl (n)
+  (bind create-sub (fun (n) (fun (x) (- x n)))
+    (bind sub3 (create-sub 3)
+      (sub3 n))))
