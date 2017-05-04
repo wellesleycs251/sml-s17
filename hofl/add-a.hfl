@@ -1,0 +1,4 @@
+(hofl (a)
+  (bind add-a (abs x (+ x a))
+    (bind a 20
+      (add-a (* 2 a)))))

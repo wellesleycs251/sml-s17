@@ -1,0 +1,35 @@
+(def y (fun (g)
+	 ((fun (s) (fun (x) ((g (s s)) x)))
+          (fun (s) (fun (x) ((g (s s)) x))))))
+
+(def fact-gen (fun (f)
+       	        (fun (n)
+  	          (if (= n 0)
+		      1
+		      (* n (f (- n 1)))))))
+      
+(def fact (y fact-gen))
+
+(def church-pair (fun (x y) (fun (f) (f x y))))
+
+(def church-fst (fun (p) (p (fun (x y) x))))
+
+(def church-snd (fun (p) (p (fun (x y) y))))
+
+(def even-odd-gen (fun (p)
+	            (church-pair
+ 	              (fun (x) ; even?
+			(if (= x 0)
+			    #t
+			    ((church-snd p) (- x 1))))
+		      (fun (y) ; odd?
+			(if (= y 0)
+			    #f
+			    ((church-fst p) (- y 1)))))))
+
+(def even? (church-fst (y even-odd-gen)))
+
+(def odd? (church-snd (y even-odd-gen)))
+
+			  
+			    

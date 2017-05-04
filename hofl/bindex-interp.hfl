@@ -1,0 +1,89 @@
+;; A Bindex environment-model intepreter written in Hofl
+
+(load "env.hfl") ; This also loads list-utils.hfl and option.hfl
+
+(def (run pgm args)
+  (bind fmls (pgm-formals pgm)
+    (if (not (= (length fmls) (length args)))
+        (error "Mismatch between expected and actual arguments"
+               (list fmls args))
+        (eval (pgm-body pgm)
+              (env-bind-all fmls args env-empty)))))
+
+(def (eval exp env) 
+  (cond ((lit? exp) (lit-value exp))
+        ((var? exp)
+         (bind val (env-lookup (var-name exp) env)
+           (if (none? val)
+               (error "Unbound variable" exp)
+               val)))
+        ((binapp? exp)
+         (binapply (binapp-op exp)  
+                   (eval (binapp-rand1 exp) env)
+                   (eval (binapp-rand2 exp) env)))
+        ((bind? exp)
+         (eval (bind-body exp) 
+               (env-bind (bind-name exp) 
+                         (eval (bind-defn exp) env)
+                         env)))
+        (else (error "Invalid expression" exp))))
+
+(def (binapply op x y)
+  (cond ((sym= op (sym +)) (+ x y))
+        ((sym= op (sym -)) (- x y))
+        ((sym= op (sym *)) (* x y))
+        ((sym= op (sym /)) (if (= y 0) (error "Div by 0" x) (/ x y)))
+        ((sym= op (sym \%)) (if (= y 0) (error "Rem by 0" x) (\% x y)))
+        (else (error "Invalid binop" op))))
+
+;;;----------------------------------------------------------------------
+;;; Abstract syntax
+
+;;; Programs
+
+(def (pgm? exp)
+  (&& (list? exp)
+      (&& (= (length exp) 3)
+      (sym= (first exp) (sym bindex)))))
+
+(def (pgm-formals exp) (second exp))
+(def (pgm-body exp) (third exp))
+
+;;; Expressions
+
+;; Integers 
+(def (lit? exp) (int? exp))
+(def (lit-value exp) exp)
+
+;; Variables
+(def (var? exp) (sym? exp))
+(def (var-name exp) exp)
+
+;; Binary Applications
+(def (binapp? exp)
+  (&& (list? exp)
+      (&& (= (length exp) 3)
+          (binop? (first exp)))))
+
+(def (binapp-op exp) (first exp))
+(def (binapp-rand1 exp) (second exp))
+(def (binapp-rand2 exp) (third exp))
+
+;; Local Bindings
+(def (bind? exp)
+  (&& (list? exp)
+      (&& (= (length exp) 4)
+	  (&& (sym= (first exp) (sym bind))
+	      (sym? (second exp))))))
+
+(def (bind-name exp) (second exp))
+(def (bind-defn exp) (third exp))
+(def (bind-body exp) (fourth exp))
+     
+;; Binary Operators
+(def (binop? exp)
+  (|| (sym= exp (sym +))
+      (|| (sym= exp (sym -))
+          (|| (sym= exp (sym *))
+              (|| (sym= exp (sym /))
+                  (sym= exp (sym \%)))))))

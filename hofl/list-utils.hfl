@@ -1,0 +1,55 @@
+; Some classic list functions expressed in HOFL
+
+(def (length xs) 
+  (if (empty? xs)
+      0
+      (+ 1 (length (tail xs)))))
+
+(def (rev xs) 
+  (bindrec ((loop (fun (old new)
+                    (if (empty? old)
+                        new
+                        (loop (tail old) (prep (head old) new))))))
+    (loop xs #e)))
+
+(def (first xs) (nth 1 xs))
+(def (second xs) (nth 2 xs))
+(def (third xs) (nth 3 xs))
+(def (fourth xs) (nth 4 xs))
+
+(def (map f xs) 
+  (if (empty? xs)
+      #e
+      (prep (f (head xs))
+            (map f (tail xs)))))
+
+(def (filter pred xs) 
+  (cond ((empty? xs) #e)
+        ((pred (head xs)) 
+	 (prep (head xs) (filter pred (tail xs))))
+        (else (filter pred (tail xs)))))
+
+(def (gen next done? seed)
+  (if (done? seed)
+      #e
+      (prep seed (gen next done? (next seed)))))
+
+(def (range lo hi)
+  (gen (fun (x) (+ x 1)) (fun (y) (>= y hi)) lo))
+
+(def (foldr binop null xs) 
+  (if (empty? xs)
+      null
+      (binop (head xs) 
+             (foldr binop null (tail xs)))))
+
+(def (foldr2 ternop null xs ys)
+  (if (|| (empty? xs) (empty? ys))
+      null
+      (ternop (head xs) 
+	      (head ys) 
+	      (foldr2 ternop null (tail xs) (tail ys)))))
+
+
+
+

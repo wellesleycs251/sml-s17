@@ -1,0 +1,35 @@
+(hofl (a b)
+  (bindrec 
+      (
+       (map (fun (f xs) 
+	      (if (empty? xs)
+                  #e
+                  (prep (f (head xs))
+                        (map f (tail xs))))))
+ 
+       (filter (fun (pred xs)
+                 (cond ((empty? xs) #e)
+                       ((pred (head xs)) 
+                        (prep (head xs) (filter pred (tail xs))))
+                       (else (filter pred (tail xs))))))
+
+       (foldr (fun (binop null xs)
+                (if (empty? xs)
+                    null
+                    (binop (head xs) (foldr binop null (tail xs))))))
+
+       (gen (fun (next done? seed)
+              (if (done? seed)
+                  #e
+                  (prep seed (gen next done? (next seed))))))
+
+       (range (fun (lo hi)
+                (gen (fun (x) (+ x 1)) (fun (y) (> y hi)) lo)))
+
+       (sq (fun (i) (* i i)))
+
+       (even? (fun (n) (= (% n 2) 0)))
+       )
+    (foldr (fun (x y) (+ x y))
+	   0
+	   (map sq (filter even? (range a b))))))

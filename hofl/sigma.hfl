@@ -1,0 +1,13 @@
+;; Test for closure conversion
+(hofl (n) (list (test 2 3 4 n) (test 5 6 7 n))
+  (def (sigma f lo hi)
+    (if (> lo hi)
+        0
+        (+ (f lo) (sigma f (+ lo 1) hi))))
+  (def (test p q r h)
+    (list (sigma sq 1 h)
+          (sigma (scale p) 1 h)
+          (sigma (linear q r) 1 h)))
+  (def (sq x) (* x x))
+  (def (scale c) (fun (y) (* c y)))
+  (def (linear a b) (fun (z) (+ (* a z) b))))

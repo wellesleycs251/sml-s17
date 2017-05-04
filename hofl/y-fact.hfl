@@ -1,0 +1,11 @@
+(def y (fun (g)
+	 ((fun (s) (fun (x) ((g (s s)) x)))
+          (fun (s) (fun (x) ((g (s s)) x))))))
+
+(def fact-gen (fun (f)
+       	        (fun (n)
+  	          (if (= n 0)
+		      1
+		      (* n (f (- n 1)))))))
+      
+(def fact (y fact-gen))

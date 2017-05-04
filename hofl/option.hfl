@@ -1,0 +1,10 @@
+;;; Representing options in HOFL
+
+(def none (sym *none*)) ; Use the symbol *NONE* to represent the none value. 
+
+(def (none? v) 
+  (if (sym? v) 
+      (sym= v none)
+      #f))
+
+(def (some? v) (not (none? v)))
