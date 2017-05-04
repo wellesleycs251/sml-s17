@@ -19,13 +19,13 @@ structure Sigmex = struct
   (************************************************************
    Abstract Syntax
    ************************************************************)
-  type var = string
-  datatype pgm = Sigmex of var list * exp (* param names, body *)
+  type ident = string
+  datatype pgm = Sigmex of ident list * exp (* param names, body *)
        and exp = Int of int (* integer literal with value *)
-	       | Var of var (* variable reference *)
+	       | Var of ident (* variable reference *)
 	       | BinApp of binop * exp * exp (* binary operator application with rator, rands *)
-	       | Bind of var * exp * exp (* bind name to value of defn in body *)
-               | Sigma of var * exp * exp * exp (* E_lo, E_hi, E_body *)					 
+	       | Bind of ident * exp * exp (* bind name to value of defn in body *)
+               | Sigma of ident * exp * exp * exp (* E_lo, E_hi, E_body *)					 
        and binop = Add | Sub | Mul | Div | Rem (* binary arithmetic ops *)
 
   exception SyntaxError of string
