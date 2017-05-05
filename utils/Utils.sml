@@ -3,7 +3,7 @@ structure Utils = struct
 fun range lo hi = if lo >= hi then [] else lo :: (range (lo + 1) hi)
 
 fun stringMake n chr = (* make a string with n copies of chr *)
-  String.implode (map (fn _ => chr) (range 0 n))
+  String.implode (List.map (fn _ => chr) (range 0 n))
 
 fun uncurry2 fcn = fn (a,b) => fcn a b
 fun uncurry3 fcn = fn (a,b,c) => fcn a b c
